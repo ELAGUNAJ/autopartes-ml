@@ -1,0 +1,297 @@
+{% extends "layout.html" %}
+
+{% block page_actions %}
+<a href="{{ url_for('ml.prediccion') }}" class="btn btn-primary">
+    <i class="fas fa-chart-line me-2"></i>Generar Nuevas Predicciones
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card dashboard-card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0"><i class="fas fa-chart-bar me-2"></i>Resumen de Predicciones</h5>
+            </div>
+            <div class="card-body">
+                {% if predicciones %}
+                <div class="row">
+                    <div class="col-md-4 text-center mb-3">
+                        <div class="border rounded p-3">
+                            <h6 class="text-muted mb-1">Productos</h6>
+                            <h3>{{ predicciones|length }}</h3>
+                            <small class="text-muted">con predicciones</small>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4 text-center mb-3">
+                        <div class="border rounded p-3">
+                            <h6 class="text-muted mb-1">Período</h6>
+                            <h3>{{ predicciones[0].prediccion.fecha_inicio.strftime('%d/%m/%Y') }}</h3>
+                            <small class="text-muted">a {{ predicciones[0].prediccion.fecha_fin.strftime('%d/%m/%Y') }}</small>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4 text-center mb-3">
+                        <div class="border rounded p-3">
+                            <h6 class="text-muted mb-1">Total Predicho</h6>
+                            {% set total_predicho = predicciones|map(attribute='prediccion.cantidad_predicha')|sum %}
+                            <h3>{{ total_predicho }}</h3>
+                            <small class="text-muted">unidades</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Gráfico de categorías -->
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <div class="chart-container">
+                            <canvas id="categoriaChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-chart-line fa-3x text-muted mb-3"></i>
+                    <h5>No hay predicciones generadas</h5>
+                    <p class="text-muted">Utilice el botón "Generar Nuevas Predicciones" para crear predicciones de ventas.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if predicciones %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card dashboard-card">
+            <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0"><i class="fas fa-list me-2"></i>Detalle de Predicciones</h5>
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="mostrar-criticos" checked>
+                    <label class="form-check-label text-white" for="mostrar-criticos">Mostrar solo críticos</label>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover" id="tabla-predicciones">
+                        <thead>
+                            <tr>
+                                <th>Código</th>
+                                <th>Categoría</th>
+                                <th>Modelo</th>
+                                <th>Stock Actual</th>
+                                <th>Predicción</th>
+                                <th>Diferencia</th>
+                                <th>Estado</th>
+                                <th>Confianza</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in predicciones %}
+                            <tr class="{% if item.stock_actual < item.prediccion.cantidad_predicha %}table-danger{% elif item.stock_actual > item.prediccion.cantidad_predicha * 2 %}table-warning{% endif %}">
+                                <td>{{ item.codigo }}</td>
+                                <td>{{ item.categoria }}</td>
+                                <td>{{ item.modelo_carro }}</td>
+                                <td>{{ item.stock_actual }}</td>
+                                <td>
+                                    <span class="fw-bold">{{ item.prediccion.cantidad_predicha }}</span>
+                                </td>
+                                <td>
+                                    {% set diferencia = item.stock_actual - item.prediccion.cantidad_predicha %}
+                                    <span class="badge {% if diferencia < 0 %}bg-danger{% elif diferencia > item.prediccion.cantidad_predicha %}bg-warning{% else %}bg-success{% endif %}">
+                                        {{ diferencia }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if item.stock_actual < item.prediccion.cantidad_predicha %}
+                                        <span class="badge bg-danger">Stock Insuficiente</span>
+                                    {% elif item.stock_actual > item.prediccion.cantidad_predicha * 2 %}
+                                        <span class="badge bg-warning">Exceso de Stock</span>
+                                    {% else %}
+                                        <span class="badge bg-success">Óptimo</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="progress" style="height: 15px;">
+                                        <div class="progress-bar bg-info" role="progressbar" style="width: {{ item.prediccion.confianza * 100 }}%;">
+                                            {{ '{:.0f}%'.format(item.prediccion.confianza * 100) }}
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card dashboard-card">
+            <div class="card-header bg-danger text-white">
+                <h5 class="card-title mb-0"><i class="fas fa-exclamation-triangle me-2"></i>Productos con Stock Insuficiente</h5>
+            </div>
+            <div class="card-body">
+                {% set stock_insuficiente = predicciones|selectattr('stock_actual', 'lt', 'prediccion.cantidad_predicha')|list %}
+                {% if stock_insuficiente %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Producto</th>
+                                <th>Categoría</th>
+                                <th>Stock</th>
+                                <th>Predicción</th>
+                                <th>Faltante</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in stock_insuficiente %}
+                            <tr>
+                                <td>{{ item.codigo }}</td>
+                                <td>{{ item.categoria }}</td>
+                                <td>{{ item.stock_actual }}</td>
+                                <td>{{ item.prediccion.cantidad_predicha }}</td>
+                                <td class="text-danger fw-bold">{{ item.prediccion.cantidad_predicha - item.stock_actual }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="text-center mt-3">
+                    <p class="text-danger fw-bold">Se recomienda reponer el inventario de estos productos para evitar ruptura de stock.</p>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-check-circle text-success fa-3x mb-3"></i>
+                    <p>No hay productos con stock insuficiente.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card dashboard-card">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="card-title mb-0"><i class="fas fa-exclamation-circle me-2"></i>Productos con Exceso de Stock</h5>
+            </div>
+            <div class="card-body">
+                {% set exceso_stock = predicciones|selectattr('stock_actual', 'gt', 'prediccion.cantidad_predicha * 2')|list %}
+                {% if exceso_stock %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Producto</th>
+                                <th>Categoría</th>
+                                <th>Stock</th>
+                                <th>Predicción</th>
+                                <th>Excedente</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in exceso_stock %}
+                            <tr>
+                                <td>{{ item.codigo }}</td>
+                                <td>{{ item.categoria }}</td>
+                                <td>{{ item.stock_actual }}</td>
+                                <td>{{ item.prediccion.cantidad_predicha }}</td>
+                                <td class="text-warning fw-bold">{{ item.stock_actual - item.prediccion.cantidad_predicha }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="text-center mt-3">
+                    <p class="text-warning fw-bold">Se recomienda considerar estrategias de venta para reducir el exceso de inventario.</p>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-check-circle text-success fa-3x mb-3"></i>
+                    <p>No hay productos con exceso de stock.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Switch para mostrar solo productos críticos
+    const switchCriticos = document.getElementById('mostrar-criticos');
+    const tablaPredic = document.getElementById('tabla-predicciones');
+    
+    if (switchCriticos && tablaPredic) {
+        switchCriticos.addEventListener('change', function() {
+            const filas = tablaPredic.querySelectorAll('tbody tr');
+            
+            filas.forEach(function(fila) {
+                if (switchCriticos.checked) {
+                    // Mostrar solo las filas con clases table-danger o table-warning
+                    if (fila.classList.contains('table-danger') || fila.classList.contains('table-warning')) {
+                        fila.style.display = '';
+                    } else {
+                        fila.style.display = 'none';
+                    }
+                } else {
+                    // Mostrar todas las filas
+                    fila.style.display = '';
+                }
+            });
+        });
+        
+        // Disparar el evento al cargar la página
+        switchCriticos.dispatchEvent(new Event('change'));
+    }
+    
+    // Gráfico de predicciones por categoría
+    {% if predicciones %}
+    // Agrupar datos por categoría
+    const categorias = {};
+    {% for item in predicciones %}
+    if (!categorias.hasOwnProperty('{{ item.categoria }}')) {
+        categorias['{{ item.categoria }}'] = {
+            total: 0,
+            productos: 0
+        };
+    }
+    categorias['{{ item.categoria }}'].total += {{ item.prediccion.cantidad_predicha }};
+    categorias['{{ item.categoria }}'].productos += 1;
+    {% endfor %}
+    
+    const catLabels = Object.keys(categorias);
+    const catData = catLabels.map(cat => categorias[cat].total);
+    const catColors = [
+        'rgba(255, 99, 132, 0.7)',
+        'rgba(54, 162, 235, 0.7)',
+        'rgba(255, 206, 86, 0.7)',
+        'rgba(75, 192, 192, 0.7)',
+        'rgba(153, 102, 255, 0.7)',
+        'rgba(255, 159, 64, 0.7)',
+        'rgba(199, 199, 199, 0.7)',
+        'rgba(83, 102, 255, 0.7)',
+        'rgba(40, 159, 64, 0.7)',
+        'rgba(210, 199, 199, 0.7)'
+    ];
+    
+    const categoriaChart = createPieChart(
+        'categoriaChart',
+        catLabels,
+        catData,
+        catColors,
+        'Predicciones por Categoría'
+    );
+    {% endif %}
+});
+</script>
+{% endblock %}

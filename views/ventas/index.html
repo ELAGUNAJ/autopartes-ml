@@ -1,0 +1,175 @@
+{% extends "layout.html" %}
+
+{% block page_actions %}
+<a href="{{ url_for('ventas.registrar') }}" class="btn btn-primary">
+    <i class="fas fa-plus me-2"></i>Registrar Venta
+</a>
+{% endblock %}
+
+{% block content %}
+<!-- Filtro de ventas -->
+<div class="card mb-4">
+    <div class="card-header bg-light">
+        <h5 class="card-title mb-0">Filtrar Ventas</h5>
+    </div>
+    <div class="card-body">
+        <form method="get" action="{{ url_for('ventas.index') }}" class="row g-3">
+            <div class="col-md-3">
+                <label for="categoria" class="form-label">Categoría</label>
+                <select name="categoria" id="categoria" class="form-select">
+                    <option value="" {% if not form.categoria.data %}selected{% endif %}>Todas las categorías</option>
+                    {% for value, label in form.categoria.choices %}
+                    <option value="{{ value }}" {% if form.categoria.data == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="modelo_carro" class="form-label">Modelo de Carro</label>
+                <select name="modelo_carro" id="modelo_carro" class="form-select">
+                    <option value="" {% if not form.modelo_carro.data %}selected{% endif %}>Todos los modelos</option>
+                    {% for value, label in form.modelo_carro.choices %}
+                    <option value="{{ value }}" {% if form.modelo_carro.data == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="fecha_inicio" class="form-label">Fecha Inicio</label>
+                <input type="date" name="fecha_inicio" id="fecha_inicio" class="form-control" value="{{ fecha_inicio }}">
+            </div>
+            <div class="col-md-3">
+                <label for="fecha_fin" class="form-label">Fecha Fin</label>
+                <input type="date" name="fecha_fin" id="fecha_fin" class="form-control" value="{{ fecha_fin }}">
+            </div>
+            <div class="col-12 text-end">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-filter me-2"></i>Filtrar
+                </button>
+                <a href="{{ url_for('ventas.index') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-undo me-2"></i>Restablecer
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Resumen de ventas -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">Resumen de Ventas</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between mb-4">
+                    <div class="text-center">
+                        <div class="fs-4 fw-bold">{{ cantidad_total }}</div>
+                        <div class="text-muted">Productos vendidos</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="fs-4 fw-bold">{{ 'S/ {:,.2f}'.format(total_ventas) }}</div>
+                        <div class="text-muted">Ventas totales</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="fs-4 fw-bold">{{ ventas|length }}</div>
+                        <div class="text-muted">Transacciones</div>
+                    </div>
+                </div>
+                
+                <div class="text-center">
+                    <div class="text-muted">Período:</div>
+                    <div class="fw-bold">{{ fecha_inicio }} al {{ fecha_fin }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="card-title mb-0">Acciones Rápidas</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <a href="{{ url_for('ventas.registrar') }}" class="btn btn-primary">
+                        <i class="fas fa-plus-circle me-2"></i>Nueva Venta
+                    </a>
+                    <a href="{{ url_for('ventas.importar_ventas') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-file-import me-2"></i>Importar Ventas
+                    </a>
+                    <button type="button" class="btn btn-outline-success" onclick="window.print()">
+                        <i class="fas fa-print me-2"></i>Imprimir
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Listado de ventas -->
+<div class="card">
+    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+        <h5 class="card-title mb-0">Listado de Ventas</h5>
+        <span class="badge bg-primary">{{ ventas|length }} ventas</span>
+    </div>
+    <div class="card-body">
+        {% if ventas %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Fecha</th>
+                        <th>Producto</th>
+                        <th>Categoría</th>
+                        <th>Cantidad</th>
+                        <th>Precio Unit.</th>
+                        <th>Total</th>
+                        <th>Vendedor</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for venta in ventas %}
+                    <tr>
+                        <td>{{ venta.id }}</td>
+                        <td>{{ venta.fecha_venta.strftime('%d/%m/%Y %H:%M') }}</td>
+                        <td>{{ venta.producto.codigo }} - {{ venta.producto.modelo_carro }}</td>
+                        <td><span class="badge bg-secondary">{{ venta.producto.categoria }}</span></td>
+                        <td>{{ venta.cantidad }}</td>
+                        <td>{{ 'S/ {:,.2f}'.format(venta.precio_unitario) }}</td>
+                        <td class="fw-bold">{{ 'S/ {:,.2f}'.format(venta.precio_total) }}</td>
+                        <td>{{ venta.usuario.username }}</td>
+                        <td>
+                            <a href="{{ url_for('ventas.detalle', venta_id=venta.id) }}" class="btn btn-sm btn-info" data-bs-toggle="tooltip" title="Ver Detalle">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-4">
+            <i class="fas fa-shopping-cart fa-3x text-muted mb-3"></i>
+            <h5>No hay ventas registradas</h5>
+            <p class="text-muted">No se encontraron ventas en el período seleccionado con los filtros aplicados.</p>
+            <a href="{{ url_for('ventas.registrar') }}" class="btn btn-primary">
+                <i class="fas fa-plus me-2"></i>Registrar Venta
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Inicializar tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    });
+</script>
+{% endblock %}
