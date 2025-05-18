@@ -1,0 +1,181 @@
+{% extends "layout.html" %}
+
+{% block page_actions %}
+<div class="btn-group">
+    <a href="{{ url_for('inventario.nuevo_producto') }}" class="btn btn-primary">
+        <i class="fas fa-plus me-2"></i>Nuevo Producto
+    </a>
+    <a href="{{ url_for('inventario.importar') }}" class="btn btn-outline-primary">
+        <i class="fas fa-file-import me-2"></i>Importar Inventario
+    </a>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Filtros -->
+<div class="card mb-4">
+    <div class="card-header bg-light">
+        <h5 class="card-title mb-0">Filtrar Inventario</h5>
+    </div>
+    <div class="card-body">
+        <form method="get" action="{{ url_for('inventario.index') }}" class="row g-3">
+            <div class="col-md-4">
+                <label for="categoria" class="form-label">Categoría</label>
+                <select name="categoria" id="categoria" class="form-select">
+                    <option value="">Todas las categorías</option>
+                    {% for cat in categorias %}
+                    <option value="{{ cat }}" {% if categoria_actual == cat %}selected{% endif %}>{{ cat }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label for="busqueda" class="form-label">Buscar</label>
+                <input type="text" name="busqueda" id="busqueda" class="form-control" placeholder="Código, modelo..." value="{{ busqueda }}">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label d-block">Filtros adicionales</label>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="checkbox" name="stock_bajo" id="stock_bajo" value="true" {% if stock_bajo %}checked{% endif %}>
+                    <label class="form-check-label" for="stock_bajo">Solo stock bajo</label>
+                </div>
+            </div>
+            <div class="col-12 text-end">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-filter me-2"></i>Filtrar
+                </button>
+                <a href="{{ url_for('inventario.index') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-undo me-2"></i>Restablecer
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Vista rápida -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card bg-light">
+            <div class="card-body text-center">
+                <div class="h1 mb-3">
+                    <i class="fas fa-boxes text-primary"></i>
+                </div>
+                <h5 class="card-title">Total Productos</h5>
+                <p class="card-text display-6">{{ inventario|length }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card bg-light">
+            <div class="card-body text-center">
+                <div class="h1 mb-3">
+                    <i class="fas fa-exclamation-circle text-danger"></i>
+                </div>
+                <h5 class="card-title">Stock Bajo</h5>
+                {% set stock_bajo_count = inventario|selectattr('1.stock_actual', 'le', '1.stock_minimo')|list|length %}
+                <p class="card-text display-6">{{ stock_bajo_count }}</p>
+                <a href="{{ url_for('inventario.inventario_bajo') }}" class="btn btn-sm btn-danger">Ver detalles</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card bg-light">
+            <div class="card-body text-center">
+                <div class="h1 mb-3">
+                    <i class="fas fa-chart-line text-success"></i>
+                </div>
+                <h5 class="card-title">Excedente</h5>
+                {% set excedente_count = inventario|selectattr('1.stock_actual', 'gt', '1.stock_optimo')|list|length %}
+                <p class="card-text display-6">{{ excedente_count }}</p>
+                <a href="{{ url_for('inventario.inventario_excedente') }}" class="btn btn-sm btn-success">Ver detalles</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Listado de inventario -->
+<div class="card">
+    <div class="card-header bg-light">
+        <h5 class="card-title mb-0">Inventario de Productos</h5>
+    </div>
+    <div class="card-body">
+        {% if inventario %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Código</th>
+                        <th>Categoría</th>
+                        <th>Modelo</th>
+                        <th>Precio</th>
+                        <th>Stock Actual</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for producto, inventario_item in inventario %}
+                    <tr>
+                        <td>{{ producto.codigo }}</td>
+                        <td><span class="badge bg-secondary">{{ producto.categoria }}</span></td>
+                        <td>{{ producto.modelo_carro }}</td>
+                        <td>{{ 'S/ {:,.2f}'.format(producto.precio_unitario) }}</td>
+                        <td class="fw-bold">
+                            {% if inventario_item %}
+                                {{ inventario_item.stock_actual }}
+                            {% else %}
+                                0
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if inventario_item %}
+                                {% if inventario_item.stock_actual <= inventario_item.stock_minimo %}
+                                    <span class="badge badge-stock bajo">Stock Bajo</span>
+                                {% elif inventario_item.stock_actual > inventario_item.stock_optimo %}
+                                    <span class="badge badge-stock excedente">Excedente</span>
+                                {% else %}
+                                    <span class="badge badge-stock optimo">Óptimo</span>
+                                {% endif %}
+                            {% else %}
+                                <span class="badge badge-stock bajo">Sin stock</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a href="{{ url_for('inventario.editar_producto', producto_id=producto.id) }}" class="btn btn-primary" data-bs-toggle="tooltip" title="Editar Producto">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="{{ url_for('inventario.editar_inventario', producto_id=producto.id) }}" class="btn btn-success" data-bs-toggle="tooltip" title="Actualizar Inventario">
+                                    <i class="fas fa-boxes"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-4">
+            <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
+            <h5>No hay productos en el inventario</h5>
+            <p class="text-muted">No se encontraron productos con los filtros aplicados.</p>
+            <a href="{{ url_for('inventario.nuevo_producto') }}" class="btn btn-primary">
+                <i class="fas fa-plus me-2"></i>Agregar Producto
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Inicializar tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    });
+</script>
+{% endblock %}

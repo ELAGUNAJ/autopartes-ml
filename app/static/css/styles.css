@@ -1,0 +1,159 @@
+/* Estilos personalizados para la aplicación */
+
+/* Variables */
+:root {
+    --primary-color: #0d6efd;
+    --secondary-color: #6c757d;
+    --success-color: #198754;
+    --danger-color: #dc3545;
+    --warning-color: #ffc107;
+    --info-color: #0dcaf0;
+    --light-color: #f8f9fa;
+    --dark-color: #212529;
+}
+
+/* Estilos generales */
+body {
+    background-color: #f5f5f5;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+main {
+    flex: 1;
+}
+
+/* Tarjetas de dashboard */
+.dashboard-card {
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+}
+
+.dashboard-card:hover {
+    transform: translateY(-5px);
+}
+
+.dashboard-card .card-header {
+    border-radius: 10px 10px 0 0;
+    padding: 15px;
+}
+
+/* Iconos de tarjetas */
+.dashboard-icon {
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+}
+
+/* Tablas */
+.table-hover tbody tr:hover {
+    background-color: rgba(13, 110, 253, 0.1);
+}
+
+/* Gráficos */
+.chart-container {
+    position: relative;
+    height: 300px;
+    margin-bottom: 20px;
+}
+
+/* Indicadores */
+.indicator {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.indicator-icon {
+    font-size: 1.5rem;
+    margin-right: 10px;
+}
+
+.indicator-value {
+    font-size: 1.2rem;
+    font-weight: bold;
+}
+
+/* Estilos para ML */
+.feature-importance-bar {
+    height: 20px;
+    background-color: var(--primary-color);
+    border-radius: 3px;
+    margin-bottom: 5px;
+}
+
+/* Elementos de formulario */
+.form-control:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+/* Botones */
+.btn-primary {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.btn-primary:hover {
+    background-color: #0b5ed7;
+    border-color: #0a58ca;
+}
+
+/* Badges */
+.badge-stock {
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-weight: 500;
+}
+
+.badge-stock.excedente {
+    background-color: var(--danger-color);
+    color: white;
+}
+
+.badge-stock.optimo {
+    background-color: var(--success-color);
+    color: white;
+}
+
+.badge-stock.bajo {
+    background-color: var(--warning-color);
+    color: #212529;
+}
+
+/* Animaciones y transiciones */
+.fade-in {
+    animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* Spinner de carga */
+.loading-spinner {
+    width: 3rem;
+    height: 3rem;
+    border: 5px solid #f3f3f3;
+    border-top: 5px solid var(--primary-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Media queries */
+@media (max-width: 768px) {
+    .dashboard-card {
+        margin-bottom: 15px;
+    }
+    
+    .chart-container {
+        height: 250px;
+    }
+}

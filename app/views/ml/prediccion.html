@@ -1,0 +1,125 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card dashboard-card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0"><i class="fas fa-chart-line me-2"></i>Generación de Predicciones</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>Las predicciones se generarán utilizando el modelo entrenado y datos recientes para estimar las ventas futuras.
+                </div>
+                
+                <form method="post" action="{{ url_for('ml.prediccion') }}">
+                    {{ form.csrf_token }}
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="categoria" class="form-label">Categoría de Productos</label>
+                            {{ form.categoria(class="form-control", id="categoria") }}
+                            {% if form.categoria.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.categoria.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <small class="form-text text-muted">Seleccione una categoría específica o deje en blanco para todas</small>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="periodo_prediccion" class="form-label">Período de Predicción</label>
+                            {{ form.periodo_prediccion(class="form-control", id="periodo_prediccion") }}
+                            {% if form.periodo_prediccion.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.periodo_prediccion.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <small class="form-text text-muted">Seleccione el horizonte temporal para las predicciones</small>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h6>Información Importante:</h6>
+                        <ul class="text-muted">
+                            <li>Las predicciones se basan en el modelo entrenado más reciente.</li>
+                            <li>Se utilizarán datos de ventas de los últimos 90 días para calcular tendencias.</li>
+                            <li>Las predicciones anteriores para el mismo período serán reemplazadas.</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-magic me-2"></i>Generar Predicciones
+                        </button>
+                    </div>
+                </form>
+                
+                <!-- Spinner de carga (oculto por defecto) -->
+                <div id="loading-spinner" class="text-center py-4 mt-3 d-none">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Cargando...</span>
+                    </div>
+                    <p class="mt-2">Generando predicciones... esto puede tardar unos momentos.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card dashboard-card">
+            <div class="card-header bg-info text-white">
+                <h5 class="card-title mb-0"><i class="fas fa-info-circle me-2"></i>¿Cómo Interpretar las Predicciones?</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="fw-bold">¿Qué significan las predicciones?</h6>
+                        <p>Las predicciones representan la cantidad esperada de ventas para cada producto durante el período seleccionado, basadas en patrones históricos y tendencias recientes.</p>
+                        
+                        <h6 class="fw-bold mt-3">Métricas importantes:</h6>
+                        <ul>
+                            <li><strong>Cantidad predicha:</strong> Ventas esperadas en el período</li>
+                            <li><strong>Confianza:</strong> Nivel de certeza de la predicción</li>
+                            <li><strong>Stock actual vs predicción:</strong> Diferencia entre inventario actual y demanda proyectada</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="fw-bold">Recomendaciones de uso:</h6>
+                        <ul>
+                            <li>Utilice las predicciones para planificar reposiciones de inventario</li>
+                            <li>Identifique productos con posible ruptura de stock</li>
+                            <li>Detecte productos con exceso de inventario para aplicar estrategias de venta</li>
+                            <li>Compare predicciones con ventas reales para medir precisión</li>
+                        </ul>
+                        
+                        <h6 class="fw-bold mt-3">Limitaciones:</h6>
+                        <p>Las predicciones son estimaciones y pueden verse afectadas por eventos inesperados, cambios de temporada o factores externos no capturados en los datos históricos.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    const spinner = document.getElementById('loading-spinner');
+    
+    form.addEventListener('submit', function() {
+        // Mostrar spinner al enviar el formulario
+        spinner.classList.remove('d-none');
+        // Deshabilitar el botón para evitar envíos múltiples
+        form.querySelector('button[type="submit"]').disabled = true;
+    });
+});
+</script>
+{% endblock %}

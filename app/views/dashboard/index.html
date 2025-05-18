@@ -1,0 +1,362 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="row">
+    <!-- Estadísticas generales -->
+    <div class="col-md-4 mb-4">
+        <div class="card dashboard-card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0"><i class="fas fa-shopping-cart me-2"></i>Ventas</h5>
+            </div>
+            <div class="card-body text-center">
+                <div class="dashboard-icon text-primary">
+                    <i class="fas fa-dollar-sign"></i>
+                </div>
+                <h3 class="mb-0">{{ 'S/ {:,.2f}'.format(estadisticas.ventas_totales) }}</h3>
+                <p class="text-muted">{{ estadisticas.total_ventas }} transacciones</p>
+                <a href="{{ url_for('ventas.index') }}" class="btn btn-sm btn-primary">Ver ventas</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-4">
+        <div class="card dashboard-card">
+            <div class="card-header bg-success text-white">
+                <h5 class="card-title mb-0"><i class="fas fa-boxes me-2"></i>Inventario</h5>
+            </div>
+            <div class="card-body text-center">
+                <div class="dashboard-icon text-success">
+                    <i class="fas fa-warehouse"></i>
+                </div>
+                {% set total_productos = inventario_excedente|length + productos_baja_rotacion|length %}
+                <h3 class="mb-0">{{ total_productos }}</h3>
+                <p class="text-muted">productos con atención requerida</p>
+                <a href="{{ url_for('inventario.index') }}" class="btn btn-sm btn-success">Ver inventario</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-4">
+        <div class="card dashboard-card">
+            <div class="card-header bg-info text-white">
+                <h5 class="card-title mb-0"><i class="fas fa-brain me-2"></i>Machine Learning</h5>
+            </div>
+            <div class="card-body text-center">
+                <div class="dashboard-icon text-info">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                {% if modelo_entrenado %}
+                <h3 class="mb-0 text-success">Activo</h3>
+                <p class="text-muted">Modelo entrenado y funcionando</p>
+                {% else %}
+                <h3 class="mb-0 text-warning">Inactivo</h3>
+                <p class="text-muted">El modelo no ha sido entrenado</p>
+                {% endif %}
+                <a href="{{ url_for('ml.index') }}" class="btn btn-sm btn-info">Ver ML Dashboard</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Impacto del ML -->
+{% if impacto_ml %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card dashboard-card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0"><i class="fas fa-chart-bar me-2"></i>Impacto del Machine Learning</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="indicator">
+                            <div class="indicator-icon text-success">
+                                <i class="fas fa-arrow-up"></i>
+                            </div>
+                            <div>
+                                <div class="indicator-value">+{{ '{:.2f}%'.format(impacto_ml.incremento_ventas) }}</div>
+                                <div class="text-muted">Incremento en ventas</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="indicator">
+                            <div class="indicator-icon text-danger">
+                                <i class="fas fa-arrow-down"></i>
+                            </div>
+                            <div>
+                                <div class="indicator-value">-{{ '{:.2f}%'.format(impacto_ml.reduccion_inventario) }}</div>
+                                <div class="text-muted">Reducción de inventario excedente</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="text-center mt-3">
+                    <a href="{{ url_for('dashboard.comparativo') }}" class="btn btn-outline-primary">Ver análisis comparativo</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="row">
+    <!-- Gráfico de ventas -->
+    <div class="col-md-8 mb-4">
+        <div class="card dashboard-card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0"><i class="fas fa-chart-line me-2"></i>Ventas por Día (Últimos 30 días)</h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="ventasChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Ventas por categoría -->
+    <div class="col-md-4 mb-4">
+        <div class="card dashboard-card">
+            <div class="card-header bg-success text-white">
+                <h5 class="card-title mb-0"><i class="fas fa-tags me-2"></i>Ventas por Categoría</h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="categoriaChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Inventario excedente -->
+    <div class="col-md-6 mb-4">
+        <div class="card dashboard-card">
+            <div class="card-header bg-danger text-white">
+                <h5 class="card-title mb-0"><i class="fas fa-exclamation-triangle me-2"></i>Inventario Excedente</h5>
+            </div>
+            <div class="card-body">
+                {% if inventario_excedente %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Producto</th>
+                                <th>Categoría</th>
+                                <th>Excedente</th>
+                                <th>Valor</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in inventario_excedente[:5] %}
+                            <tr>
+                                <td>{{ item.codigo }}</td>
+                                <td>{{ item.categoria }}</td>
+                                <td>{{ item.excedente }}</td>
+                                <td>{{ 'S/ {:,.2f}'.format(item.excedente * item.precio_unitario) }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% if inventario_excedente|length > 5 %}
+                <div class="text-center">
+                    <a href="{{ url_for('inventario.inventario_excedente') }}" class="btn btn-sm btn-outline-danger">Ver todo</a>
+                </div>
+                {% endif %}
+                {% else %}
+                <div class="text-center py-3">
+                    <i class="fas fa-check-circle text-success fa-3x mb-3"></i>
+                    <p>No hay inventario excedente actualmente.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Productos con baja rotación -->
+    <div class="col-md-6 mb-4">
+        <div class="card dashboard-card">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="card-title mb-0"><i class="fas fa-hourglass-half me-2"></i>Productos con Baja Rotación</h5>
+            </div>
+            <div class="card-body">
+                {% if productos_baja_rotacion %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Producto</th>
+                                <th>Categoría</th>
+                                <th>Ventas</th>
+                                <th>Stock</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in productos_baja_rotacion[:5] %}
+                            <tr>
+                                <td>{{ item.codigo }}</td>
+                                <td>{{ item.categoria }}</td>
+                                <td>{{ item.total_ventas }}</td>
+                                <td>{{ item.stock_actual }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% if productos_baja_rotacion|length > 5 %}
+                <div class="text-center">
+                    <a href="{{ url_for('inventario.index') }}?stock_bajo=true" class="btn btn-sm btn-outline-warning">Ver todo</a>
+                </div>
+                {% endif %}
+                {% else %}
+                <div class="text-center py-3">
+                    <i class="fas fa-check-circle text-success fa-3x mb-3"></i>
+                    <p>No hay productos con baja rotación actualmente.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Predicciones vs ventas reales (si hay modelo entrenado) -->
+{% if modelo_entrenado and datos_grafico_predicciones %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card dashboard-card">
+            <div class="card-header bg-info text-white">
+                <h5 class="card-title mb-0"><i class="fas fa-robot me-2"></i>Predicciones vs Ventas Reales</h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="prediccionesChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Últimas ventas -->
+<div class="row">
+    <div class="col-12 mb-4">
+        <div class="card dashboard-card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0"><i class="fas fa-receipt me-2"></i>Últimas Ventas</h5>
+            </div>
+            <div class="card-body">
+                {% if ultimas_ventas %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Producto</th>
+                                <th>Cantidad</th>
+                                <th>Total</th>
+                                <th>Vendedor</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for venta in ultimas_ventas %}
+                            <tr>
+                                <td>{{ venta.fecha_venta.strftime('%d/%m/%Y %H:%M') }}</td>
+                                <td>{{ venta.producto.codigo }} - {{ venta.producto.categoria }}</td>
+                                <td>{{ venta.cantidad }}</td>
+                                <td>{{ 'S/ {:,.2f}'.format(venta.precio_total) }}</td>
+                                <td>{{ venta.usuario.username }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="text-center">
+                    <a href="{{ url_for('ventas.index') }}" class="btn btn-sm btn-outline-primary">Ver todas las ventas</a>
+                </div>
+                {% else %}
+                <div class="text-center py-3">
+                    <p>No hay ventas registradas aún.</p>
+                    <a href="{{ url_for('ventas.registrar') }}" class="btn btn-primary">Registrar venta</a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Gráfico de ventas
+        {% if datos_grafico_ventas and datos_grafico_ventas.fechas %}
+        const ventasChart = createLineChart(
+            'ventasChart',
+            {{ datos_grafico_ventas.fechas|tojson }},
+            [{
+                label: 'Ventas (S/)',
+                data: {{ datos_grafico_ventas.totales|tojson }},
+                borderColor: 'rgb(13, 110, 253)',
+                backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                tension: 0.1,
+                fill: true
+            }]
+        );
+        {% endif %}
+        
+        // Gráfico de categorías
+        {% if ventas_categoria %}
+        const catLabels = {{ ventas_categoria|map(attribute='categoria')|list|tojson }};
+        const catData = {{ ventas_categoria|map(attribute='monto_total')|list|tojson }};
+        const catColors = [
+            'rgba(255, 99, 132, 0.7)',
+            'rgba(54, 162, 235, 0.7)',
+            'rgba(255, 206, 86, 0.7)',
+            'rgba(75, 192, 192, 0.7)',
+            'rgba(153, 102, 255, 0.7)',
+            'rgba(255, 159, 64, 0.7)',
+            'rgba(199, 199, 199, 0.7)',
+            'rgba(83, 102, 255, 0.7)',
+            'rgba(40, 159, 64, 0.7)',
+            'rgba(210, 199, 199, 0.7)'
+        ];
+        
+        const categoriaChart = createPieChart(
+            'categoriaChart',
+            catLabels,
+            catData,
+            catColors
+        );
+        {% endif %}
+        
+        // Gráfico de predicciones vs real (si hay modelo ML)
+        {% if datos_grafico_predicciones %}
+        const predChart = createLineChart(
+            'prediccionesChart',
+            {{ datos_grafico_predicciones.fechas|tojson }},
+            [
+                {
+                    label: 'Ventas reales',
+                    data: {{ datos_grafico_predicciones.cantidades|tojson }},
+                    borderColor: 'rgb(25, 135, 84)',
+                    backgroundColor: 'rgba(25, 135, 84, 0.1)',
+                    tension: 0.1
+                },
+                {
+                    label: 'Predicción',
+                    data: Array({{ datos_grafico_predicciones.fechas|length }}).fill({{ datos_grafico_predicciones.prediccion }}),
+                    borderColor: 'rgb(13, 202, 240)',
+                    backgroundColor: 'rgba(13, 202, 240, 0.1)',
+                    borderDash: [5, 5],
+                    tension: 0
+                }
+            ],
+            'Predicción para Producto ID: {{ datos_grafico_predicciones.producto_id }}'
+        );
+        {% endif %}
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,217 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="row mb-4">
+    <!-- Tarjeta de estado del modelo -->
+    <div class="col-md-6">
+        <div class="card dashboard-card">
+            <div class="card-header {% if modelo_entrenado %}bg-success{% else %}bg-warning{% endif %} text-white">
+                <h5 class="card-title mb-0"><i class="fas fa-brain me-2"></i>Estado del Modelo ML</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="me-3">
+                        <i class="fas {% if modelo_entrenado %}fa-check-circle text-success{% else %}fa-exclamation-circle text-warning{% endif %} fa-3x"></i>
+                    </div>
+                    <div>
+                        <h4>{% if modelo_entrenado %}Modelo Entrenado{% else %}Modelo No Entrenado{% endif %}</h4>
+                        {% if ultima_actualizacion %}
+                        <p class="text-muted mb-0">Última actualización: {{ ultima_actualizacion.strftime('%d/%m/%Y %H:%M') }}</p>
+                        {% else %}
+                        <p class="text-muted mb-0">No hay modelo entrenado aún</p>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                {% if not modelo_entrenado %}
+                <div class="alert alert-warning">
+                    <i class="fas fa-info-circle me-2"></i>Es necesario entrenar el modelo para comenzar a generar predicciones.
+                </div>
+                <a href="{{ url_for('ml.entrenamiento') }}" class="btn btn-primary">
+                    <i class="fas fa-cogs me-2"></i>Entrenar Modelo
+                </a>
+                {% else %}
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>El modelo está listo para generar predicciones.
+                </div>
+                <div class="btn-group">
+                    <a href="{{ url_for('ml.entrenamiento') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-sync me-2"></i>Reentrenar
+                    </a>
+                    <a href="{{ url_for('ml.prediccion') }}" class="btn btn-primary">
+                        <i class="fas fa-chart-line me-2"></i>Generar Predicciones
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Tarjeta de métricas -->
+    <div class="col-md-6">
+        <div class="card dashboard-card">
+            <div class="card-header bg-info text-white">
+                <h5 class="card-title mb-0"><i class="fas fa-chart-bar me-2"></i>Métricas del Modelo</h5>
+            </div>
+            <div class="card-body">
+                {% if metricas %}
+                <div class="row">
+                    <div class="col-md-4 text-center mb-3">
+                        <div class="border rounded p-3">
+                            <h6 class="text-muted mb-1">Error Absoluto Medio</h6>
+                            <h3>{{ '{:.2f}'.format(metricas.mae) }}</h3>
+                            <small class="text-muted">MAE</small>
+                        </div>
+                    </div>
+                    <div class="col-md-4 text-center mb-3">
+                        <div class="border rounded p-3">
+                            <h6 class="text-muted mb-1">Reducción Inventario</h6>
+                            <h3>{{ '{:.2f}%'.format(metricas.reduccion_inventario) }}</h3>
+                            <small class="text-success">Menos excedente</small>
+                        </div>
+                    </div>
+                    <div class="col-md-4 text-center mb-3">
+                        <div class="border rounded p-3">
+                            <h6 class="text-muted mb-1">Incremento Ventas</h6>
+                            <h3>{{ '{:.2f}%'.format(metricas.incremento_ventas) }}</h3>
+                            <small class="text-success">Más ingresos</small>
+                        </div>
+                    </div>
+                </div>
+                <a href="{{ url_for('ml.evaluacion') }}" class="btn btn-outline-info">
+                    <i class="fas fa-search me-2"></i>Realizar Nueva Evaluación
+                </a>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-chart-pie fa-3x text-muted mb-3"></i>
+                    <h5>No hay métricas disponibles</h5>
+                    <p class="text-muted">Primero entrene el modelo y realice una evaluación para ver las métricas de rendimiento.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Últimas predicciones -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card dashboard-card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0"><i class="fas fa-chart-line me-2"></i>Últimas Predicciones</h5>
+            </div>
+            <div class="card-body">
+                {% if predicciones %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Producto</th>
+                                <th>Categoría</th>
+                                <th>Cantidad Predicha</th>
+                                <th>Periodo</th>
+                                <th>Confianza</th>
+                                <th>Fecha Predicción</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for prediccion in predicciones %}
+                            <tr>
+                                <td>{{ prediccion.producto.codigo }}</td>
+                                <td>{{ prediccion.producto.categoria }}</td>
+                                <td>{{ prediccion.cantidad_predicha }}</td>
+                                <td>{{ prediccion.fecha_inicio.strftime('%d/%m/%Y') }} - {{ prediccion.fecha_fin.strftime('%d/%m/%Y') }}</td>
+                                <td>
+                                    <div class="progress" style="height: 15px;">
+                                        <div class="progress-bar bg-success" role="progressbar" style="width: {{ prediccion.confianza * 100 }}%;">
+                                            {{ '{:.0f}%'.format(prediccion.confianza * 100) }}
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>{{ prediccion.fecha_prediccion.strftime('%d/%m/%Y %H:%M') }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="text-center">
+                    <a href="{{ url_for('ml.resultados_prediccion') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-list me-2"></i>Ver todas las predicciones
+                    </a>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-empty-set fa-3x text-muted mb-3"></i>
+                    <h5>No hay predicciones generadas</h5>
+                    <p class="text-muted">Genere predicciones para ver resultados aquí.</p>
+                    {% if modelo_entrenado %}
+                    <a href="{{ url_for('ml.prediccion') }}" class="btn btn-primary">
+                        <i class="fas fa-chart-line me-2"></i>Generar Predicciones
+                    </a>
+                    {% else %}
+                    <a href="{{ url_for('ml.entrenamiento') }}" class="btn btn-primary">
+                        <i class="fas fa-cogs me-2"></i>Entrenar Modelo
+                    </a>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Flujo de trabajo ML -->
+<div class="row">
+    <div class="col-12">
+        <div class="card dashboard-card">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="card-title mb-0"><i class="fas fa-project-diagram me-2"></i>Flujo de Trabajo Machine Learning</h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-3 mb-3">
+                        <div class="border rounded p-3 {% if modelo_entrenado %}bg-success text-white{% endif %}">
+                            <i class="fas fa-database fa-2x mb-3"></i>
+                            <h5>1. Datos</h5>
+                            <p class="small">Recolección y preprocesamiento de datos históricos</p>
+                            <a href="{{ url_for('ventas.index') }}" class="btn btn-sm btn-outline-{% if modelo_entrenado %}light{% else %}primary{% endif %}">
+                                Ver datos
+                            </a>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="border rounded p-3 {% if modelo_entrenado %}bg-success text-white{% endif %}">
+                            <i class="fas fa-cogs fa-2x mb-3"></i>
+                            <h5>2. Entrenamiento</h5>
+                            <p class="small">Entrenamiento del modelo ExtraTreesRegressor</p>
+                            <a href="{{ url_for('ml.entrenamiento') }}" class="btn btn-sm btn-outline-{% if modelo_entrenado %}light{% else %}primary{% endif %}">
+                                {% if modelo_entrenado %}Reentrenar{% else %}Entrenar{% endif %}
+                            </a>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="border rounded p-3 {% if predicciones %}bg-success text-white{% endif %}">
+                            <i class="fas fa-chart-line fa-2x mb-3"></i>
+                            <h5>3. Predicción</h5>
+                            <p class="small">Generación de predicciones de ventas</p>
+                            <a href="{{ url_for('ml.prediccion') }}" class="btn btn-sm btn-outline-{% if predicciones %}light{% else %}primary{% endif %}" {% if not modelo_entrenado %}disabled{% endif %}>
+                                Predecir
+                            </a>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="border rounded p-3 {% if metricas %}bg-success text-white{% endif %}">
+                            <i class="fas fa-tasks fa-2x mb-3"></i>
+                            <h5>4. Evaluación</h5>
+                            <p class="small">Medición del impacto y mejora continua</p>
+                            <a href="{{ url_for('ml.evaluacion') }}" class="btn btn-sm btn-outline-{% if metricas %}light{% else %}primary{% endif %}" {% if not predicciones %}disabled{% endif %}>
+                                Evaluar
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

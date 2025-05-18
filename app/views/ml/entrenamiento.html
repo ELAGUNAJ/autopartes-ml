@@ -1,0 +1,127 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card dashboard-card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0"><i class="fas fa-cogs me-2"></i>Entrenamiento del Modelo ML</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>El entrenamiento del modelo utilizará datos históricos de ventas para aprender patrones y generar predicciones precisas.
+                </div>
+                
+                <form method="post" action="{{ url_for('ml.entrenamiento') }}">
+                    {{ form.csrf_token }}
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="fecha_inicio" class="form-label">Fecha Inicio</label>
+                            {{ form.fecha_inicio(class="form-control", id="fecha_inicio") }}
+                            {% if form.fecha_inicio.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.fecha_inicio.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <small class="form-text text-muted">Seleccione la fecha de inicio del período para entrenamiento</small>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="fecha_fin" class="form-label">Fecha Fin</label>
+                            {{ form.fecha_fin(class="form-control", id="fecha_fin") }}
+                            {% if form.fecha_fin.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.fecha_fin.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <small class="form-text text-muted">Seleccione la fecha de fin del período para entrenamiento</small>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h6>Información Importante:</h6>
+                        <ul class="text-muted">
+                            <li>Se recomienda utilizar al menos 6 meses de datos históricos para un mejor entrenamiento.</li>
+                            <li>El entrenamiento puede tomar varios minutos dependiendo del volumen de datos.</li>
+                            <li>Si el modelo ya existe, se sobrescribirá con la nueva versión entrenada.</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-play-circle me-2"></i>Iniciar Entrenamiento
+                        </button>
+                    </div>
+                </form>
+                
+                <!-- Spinner de carga (oculto por defecto) -->
+                <div id="loading-spinner" class="text-center py-4 mt-3 d-none">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Cargando...</span>
+                    </div>
+                    <p class="mt-2">Entrenando modelo... esto puede tardar varios minutos.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card dashboard-card">
+            <div class="card-header bg-info text-white">
+                <h5 class="card-title mb-0"><i class="fas fa-info-circle me-2"></i>Sobre el Modelo ExtraTreesRegressor</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="fw-bold">¿Qué es ExtraTreesRegressor?</h6>
+                        <p>ExtraTreesRegressor es un algoritmo de aprendizaje automático basado en ensamblado de árboles de decisión que mejora la precisión y controla el sobreajuste mediante la introducción de aleatoriedad adicional.</p>
+                        
+                        <h6 class="fw-bold mt-3">Características:</h6>
+                        <ul>
+                            <li>Maneja bien valores faltantes y atípicos</li>
+                            <li>No requiere escalado de características</li>
+                            <li>Puede capturar relaciones no lineales</li>
+                            <li>Proporciona medidas de importancia de características</li>
+                            <li>Buen rendimiento con datos dispersos (con espacios vacíos)</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="fw-bold">Características utilizadas:</h6>
+                        <ul>
+                            <li><strong>Temporales:</strong> día de la semana, semana del año, mes, etc.</li>
+                            <li><strong>Producto:</strong> categoría, modelo de carro, precio</li>
+                            <li><strong>Ventas:</strong> histórico de ventas, medias móviles</li>
+                            <li><strong>Inventario:</strong> stock actual, mínimo y óptimo</li>
+                        </ul>
+                        
+                        <h6 class="fw-bold mt-3">Salida del modelo:</h6>
+                        <p>El modelo generará predicciones de ventas para cada producto en diferentes horizontes temporales, lo que permitirá optimizar el inventario y mejorar la planificación.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    const spinner = document.getElementById('loading-spinner');
+    
+    form.addEventListener('submit', function() {
+        // Mostrar spinner al enviar el formulario
+        spinner.classList.remove('d-none');
+        // Deshabilitar el botón para evitar envíos múltiples
+        form.querySelector('button[type="submit"]').disabled = true;
+    });
+});
+</script>
+{% endblock %}

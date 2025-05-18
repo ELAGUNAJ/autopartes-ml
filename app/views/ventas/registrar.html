@@ -1,0 +1,115 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card dashboard-card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0"><i class="fas fa-shopping-cart me-2"></i>Registrar Venta</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" action="{{ url_for('ventas.registrar') }}">
+                    {{ form.csrf_token }}
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="producto_id" class="form-label">Producto</label>
+                            {{ form.producto_id(class="form-control", id="producto_id", onchange="actualizarCamposProducto(this.value)") }}
+                            {% if form.producto_id.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.producto_id.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div id="stock-info" class="mt-2"></div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="cantidad" class="form-label">Cantidad</label>
+                            {{ form.cantidad(class="form-control", id="cantidad", min="1") }}
+                            {% if form.cantidad.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.cantidad.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="precio_unitario" class="form-label">Precio Unitario</label>
+                            {{ form.precio_unitario(class="form-control", id="precio_unitario", step="0.01", min="0") }}
+                            {% if form.precio_unitario.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.precio_unitario.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="fecha_venta" class="form-label">Fecha de Venta</label>
+                            {{ form.fecha_venta(class="form-control", id="fecha_venta", type="date") }}
+                            {% if form.fecha_venta.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.fecha_venta.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <small class="form-text text-muted">Dejar en blanco para usar la fecha actual.</small>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="precio_total" class="form-label">Precio Total</label>
+                            <div class="input-group">
+                                <span class="input-group-text">S/</span>
+                                <input type="text" id="precio_total" class="form-control" readonly>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        {{ form.submit(class="btn btn-primary") }}
+                        <a href="{{ url_for('ventas.index') }}" class="btn btn-outline-secondary">Cancelar</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Inicializar los campos
+    const productoSelect = document.getElementById('producto_id');
+    if (productoSelect.value) {
+        actualizarCamposProducto(productoSelect.value);
+    }
+    
+    // Calcular precio total al cambiar cantidad o precio unitario
+    const cantidadInput = document.getElementById('cantidad');
+    const precioUnitarioInput = document.getElementById('precio_unitario');
+    const precioTotalInput = document.getElementById('precio_total');
+    
+    function calcularPrecioTotal() {
+        const cantidad = parseFloat(cantidadInput.value) || 0;
+        const precioUnitario = parseFloat(precioUnitarioInput.value) || 0;
+        const precioTotal = cantidad * precioUnitario;
+        precioTotalInput.value = precioTotal.toFixed(2);
+    }
+    
+    cantidadInput.addEventListener('input', calcularPrecioTotal);
+    precioUnitarioInput.addEventListener('input', calcularPrecioTotal);
+    
+    // Calcular inicialmente
+    calcularPrecioTotal();
+});
+</script>
+{% endblock %}
