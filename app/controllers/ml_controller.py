@@ -44,8 +44,23 @@ class PrediccionForm(FlaskForm):
     submit = SubmitField('Generar Predicciones')
 
 class EvaluacionForm(FlaskForm):
-    fecha_inicio = DateField('Fecha Inicio', validators=[DataRequired()])
-    fecha_fin = DateField('Fecha Fin', validators=[DataRequired()])
+    metrica = SelectField('Métrica de Evaluación', 
+                         choices=[
+                             ('mae', 'Error Absoluto Medio (MAE)'),
+                             ('rmse', 'Error Cuadrático Medio (RMSE)'),
+                             ('r2', 'Coeficiente de Determinación (R²)')
+                         ],
+                         validators=[DataRequired()])
+    periodo_evaluacion = SelectField('Período de Evaluación',
+                                   choices=[
+                                       ('7', 'Últimos 7 días'),
+                                       ('30', 'Últimos 30 días'),
+                                       ('90', 'Últimos 90 días'),
+                                       ('custom', 'Personalizado')
+                                   ],
+                                   validators=[DataRequired()])
+    fecha_inicio = DateField('Fecha Inicio', validators=[Optional()])
+    fecha_fin = DateField('Fecha Fin', validators=[Optional()])
     submit = SubmitField('Evaluar Resultados')
 
 # Rutas
@@ -371,6 +386,20 @@ def resultados_prediccion():
         title='Resultados de Predicciones'
     )
 
+class EvaluacionForm(FlaskForm):
+    fecha_inicio = DateField('Fecha Inicio', validators=[DataRequired()])
+    fecha_fin = DateField('Fecha Fin', validators=[DataRequired()])
+    metrica = SelectField('Métrica de Evaluación', 
+                         choices=[
+                             ('mae', 'Error Absoluto Medio (MAE)'),
+                             ('rmse', 'Error Cuadrático Medio (RMSE)'),
+                             ('r2', 'Coeficiente de Determinación (R²)')
+                         ],
+                         default='mae',
+                         validators=[Optional()])
+    submit = SubmitField('Evaluar Resultados')
+
+
 @ml_bp.route('/evaluacion', methods=['GET', 'POST'])
 @login_required
 @admin_required
@@ -386,6 +415,7 @@ def evaluacion():
     if form.validate_on_submit():
         fecha_inicio = form.fecha_inicio.data
         fecha_fin = form.fecha_fin.data
+        metrica_seleccionada = form.metrica.data
         
         try:
             # Obtener predicciones en el período seleccionado
@@ -418,13 +448,36 @@ def evaluacion():
             
             # Calcular métricas
             errores = []
+            errores_cuadrados = []
+            reales = []
+            predichos = []
+            
             for producto_id, cantidad_predicha in predicciones_dict.items():
                 cantidad_real = ventas_dict.get(producto_id, 0)
                 error = abs(cantidad_predicha - cantidad_real)
+                error_cuadrado = (cantidad_predicha - cantidad_real) ** 2
+                
                 errores.append(error)
+                errores_cuadrados.append(error_cuadrado)
+                reales.append(cantidad_real)
+                predichos.append(cantidad_predicha)
             
-            # Calcular MAE
+            # Calcular diferentes métricas según selección
             mae = sum(errores) / len(errores) if errores else 0
+            rmse = (sum(errores_cuadrados) / len(errores_cuadrados)) ** 0.5 if errores_cuadrados else 0
+            
+            # Cálculo de R² (necesita un poco más de lógica)
+            media_reales = sum(reales) / len(reales) if reales else 0
+            ss_total = sum((y - media_reales) ** 2 for y in reales) if reales else 0
+            ss_residual = sum(errores_cuadrados)
+            r2 = 1 - (ss_residual / ss_total) if ss_total != 0 else 0
+            
+            # Asignar la métrica correcta basada en la selección
+            metrica_valor = mae
+            if metrica_seleccionada == 'rmse':
+                metrica_valor = rmse
+            elif metrica_seleccionada == 'r2':
+                metrica_valor = r2
             
             # Calcular reducción de inventario excedente
             # Comparar inventario excedente antes y después del ML
@@ -460,6 +513,8 @@ def evaluacion():
                 periodo_inicio=fecha_inicio,
                 periodo_fin=fecha_fin,
                 mae=mae,
+                rmse=rmse,  # Añadir RMSE
+                r2=r2,      # Añadir R²
                 reduccion_inventario_excedente=10.5,  # Valor ejemplo, se debería calcular con datos reales
                 incremento_ventas=incremento_ventas,
                 notas=f'Evaluación realizada el {datetime.now()}'
@@ -468,7 +523,7 @@ def evaluacion():
             db.session.add(resultado)
             db.session.commit()
             
-            flash(f'Evaluación completada con MAE: {mae:.2f}', 'success')
+            flash(f'Evaluación completada con {metrica_seleccionada.upper()}: {metrica_valor:.2f}', 'success')
             return redirect(url_for('ml.resultados_evaluacion'))
             
         except Exception as e:

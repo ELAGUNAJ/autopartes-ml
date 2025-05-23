@@ -7,18 +7,16 @@ class Config:
 class DevelopmentConfig(Config):
     """Configuración de desarrollo."""
     DEBUG = True
-    SQLALCHEMY_DATABASE_URI = 'postgresql://usuario:contraseña@localhost/autopartes_ml_dev'
-    # Alternativa si no tienes PostgreSQL configurado:
-    # SQLALCHEMY_DATABASE_URI = 'sqlite:///app.db'
+    # SQLite para simplificar (no requiere configuración de PostgreSQL)
+    #SQLALCHEMY_DATABASE_URI = 'sqlite:///app.db'
+    # Si prefieres PostgreSQL (cambia las credenciales):
+    SQLALCHEMY_DATABASE_URI = 'postgresql://postgres:12345678@localhost/autopartes_ML'
     
 
 class ProductionConfig(Config):
     """Configuración de producción."""
     DEBUG = False
     SQLALCHEMY_DATABASE_URI = 'postgresql://usuario:contraseña@localhost/autopartes_ml_prod'
-    # Usar variables de entorno en producción:
-    # SECRET_KEY = os.environ.get('SECRET_KEY')
-    # SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL')
     
 
 class TestingConfig(Config):

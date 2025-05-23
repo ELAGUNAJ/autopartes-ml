@@ -1,0 +1,118 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card dashboard-card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-plus me-2"></i>{% if producto %}Editar{% else %}Nuevo{% endif %} Producto
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="post" action="{% if producto %}{{ url_for('inventario.editar_producto', producto_id=producto.id) }}{% else %}{{ url_for('inventario.nuevo_producto') }}{% endif %}">
+                    {{ form.csrf_token }}
+                    
+                    <div class="mb-3">
+                        <label for="codigo" class="form-label">Código</label>
+                        {{ form.codigo(class="form-control", id="codigo") }}
+                        {% if form.codigo.errors %}
+                            <div class="text-danger">
+                                {% for error in form.codigo.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="categoria" class="form-label">Categoría</label>
+                        {{ form.categoria(class="form-control", id="categoria") }}
+                        {% if form.categoria.errors %}
+                            <div class="text-danger">
+                                {% for error in form.categoria.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        
+                        <div id="nueva-categoria-container" style="display: none; margin-top: 10px;">
+                            <label for="nueva_categoria" class="form-label">Nueva Categoría</label>
+                            <input type="text" name="nueva_categoria" id="nueva_categoria" class="form-control">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="modelo_carro" class="form-label">Modelo de Carro</label>
+                        {{ form.modelo_carro(class="form-control", id="modelo_carro") }}
+                        {% if form.modelo_carro.errors %}
+                            <div class="text-danger">
+                                {% for error in form.modelo_carro.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="precio_unitario" class="form-label">Precio Unitario</label>
+                        {{ form.precio_unitario(class="form-control", id="precio_unitario", type="number", step="0.01", min="0") }}
+                        {% if form.precio_unitario.errors %}
+                            <div class="text-danger">
+                                {% for error in form.precio_unitario.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="descripcion" class="form-label">Descripción</label>
+                        {{ form.descripcion(class="form-control", id="descripcion", rows="3") }}
+                        {% if form.descripcion.errors %}
+                            <div class="text-danger">
+                                {% for error in form.descripcion.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3 form-check">
+                        {{ form.es_producto_nuevo(class="form-check-input", id="es_producto_nuevo") }}
+                        <label class="form-check-label" for="es_producto_nuevo">Es Producto Nuevo</label>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        {{ form.submit(class="btn btn-primary") }}
+                        <a href="{{ url_for('inventario.index') }}" class="btn btn-outline-secondary">Cancelar</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const categoriaSelect = document.getElementById('categoria');
+    const nuevaCategoriaContainer = document.getElementById('nueva-categoria-container');
+    
+    // Mostrar/ocultar campo de nueva categoría
+    categoriaSelect.addEventListener('change', function() {
+        if (this.value === 'nueva') {
+            nuevaCategoriaContainer.style.display = 'block';
+        } else {
+            nuevaCategoriaContainer.style.display = 'none';
+        }
+    });
+    
+    // Comprobar estado inicial
+    if (categoriaSelect.value === 'nueva') {
+        nuevaCategoriaContainer.style.display = 'block';
+    }
+});
+</script>
+{% endblock %}

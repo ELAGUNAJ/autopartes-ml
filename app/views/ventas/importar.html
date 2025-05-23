@@ -1,0 +1,146 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header bg-primary text-white">
+        <h5 class="card-title mb-0">Importar Ventas Históricas</h5>
+    </div>
+    <div class="card-body">
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle me-2"></i>
+            Puedes cargar un archivo CSV con el historial de ventas para importarlas al sistema.
+            Asegúrate de que el archivo tenga el formato correcto.
+        </div>
+
+        <!-- Añadido: Información detallada del formato esperado -->
+        <div class="alert alert-info">
+            <h5>Formato esperado del archivo CSV:</h5>
+            <p>El archivo debe tener las siguientes columnas en este orden:</p>
+            <ol>
+                <li>Fecha (formatos aceptados: DD/MM/YYYY, YYYY-MM-DD, DD-MM-YYYY)</li>
+                <li>Código de Producto (debe existir en el sistema)</li>
+                <li>Categoría</li>
+                <li>Cantidad (número entero)</li>
+                <li>Precio Unitario (número decimal, usa punto o coma como separador)</li>
+            </ol>
+            <p>Ejemplo:</p>
+            <pre>18/05/2025,P001,Parachoques traseros,5,410.12
+17/05/2025,P003,Parachoques delanteros,3,380.30</pre>
+            <p><strong>Nota:</strong> Si tienes problemas con la codificación del archivo, intenta guardarlo como UTF-8 en tu editor de hojas de cálculo.</p>
+        </div>
+
+        <form method="POST" action="{{ url_for('ventas.importar_ventas') }}" enctype="multipart/form-data">
+            <!-- Usar el token CSRF del formulario -->
+            {% if form %}
+            {{ form.csrf_token }}
+            {% endif %}
+            
+            <div class="mb-3">
+                <label for="archivo_csv" class="form-label">Archivo CSV de Ventas</label>
+                <input type="file" class="form-control" id="archivo_csv" name="archivo_csv" accept=".csv" required>
+                <div class="form-text">
+                    El archivo debe contener las columnas: Fecha, Producto, Categoría, Cantidad, Precio Unit.
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <label class="form-label">Opciones de Importación</label>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="ignorar_encabezados" name="ignorar_encabezados" checked>
+                    <label class="form-check-label" for="ignorar_encabezados">
+                        Ignorar primera fila (encabezados)
+                    </label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="actualizar_existentes" name="actualizar_existentes">
+                    <label class="form-check-label" for="actualizar_existentes">
+                        Actualizar registros existentes
+                    </label>
+                </div>
+            </div>
+            
+            <div class="text-end">
+                <a href="{{ url_for('ventas.index') }}" class="btn btn-secondary me-2">
+                    <i class="fas fa-times me-2"></i>Cancelar
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-file-import me-2"></i>Importar Ventas
+                </button>
+            </div>
+        </form>
+        
+        <hr class="my-4">
+        
+        <h6 class="mb-3">Formato esperado del archivo CSV:</h6>
+        <div class="table-responsive">
+            <table class="table table-sm table-bordered">
+                <thead class="table-light">
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Producto</th>
+                        <th>Categoría</th>
+                        <th>Cantidad</th>
+                        <th>Precio Unit.</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>18/05/2025</td>
+                        <td>P001 - Honda Civic</td>
+                        <td>Parachoques traseros</td>
+                        <td>5</td>
+                        <td>410.12</td>
+                    </tr>
+                    <tr>
+                        <td>17/05/2025</td>
+                        <td>P003 - Honda Civic</td>
+                        <td>Parachoques delanteros</td>
+                        <td>3</td>
+                        <td>380.30</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="alert alert-warning mt-3">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            <strong>Importante:</strong> Asegúrate de que los códigos de producto existan en el sistema antes de importar las ventas.
+        </div>
+
+        <!-- Añadido: Consejos para solucionar problemas comunes -->
+        <div class="alert alert-secondary mt-3">
+            <i class="fas fa-lightbulb me-2"></i>
+            <strong>Consejos para solucionar problemas:</strong>
+            <ul class="mb-0">
+                <li>Si el archivo no se carga correctamente, asegúrate de que esté codificado en UTF-8</li>
+                <li>Para convertir tu archivo a UTF-8: abre el CSV en Excel, selecciona "Guardar como" y elige "CSV UTF-8" en el tipo de archivo</li>
+                <li>Verifica que las fechas estén en formato DD/MM/YYYY (ejemplo: 18/05/2025)</li>
+                <li>Asegúrate de que los códigos de producto coincidan exactamente con los registrados en el sistema</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Validación de archivo
+        document.querySelector('form').addEventListener('submit', function(e) {
+            const fileInput = document.getElementById('archivo_csv');
+            if (fileInput.files.length === 0) {
+                e.preventDefault();
+                alert('Por favor, selecciona un archivo CSV para importar');
+                return false;
+            }
+            
+            const fileName = fileInput.files[0].name;
+            if (!fileName.endsWith('.csv')) {
+                e.preventDefault();
+                alert('Por favor, selecciona un archivo con extensión .csv');
+                return false;
+            }
+        });
+    });
+</script>
+{% endblock %}

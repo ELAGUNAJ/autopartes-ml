@@ -27,31 +27,3 @@ class Inventario(db.Model):
             'ubicacion': self.ubicacion,
             'ultima_actualizacion': self.ultima_actualizacion.isoformat()
         }
-    
-    def actualizar_stock(self, nueva_cantidad):
-        """Actualizar el stock de un producto."""
-        self.stock_actual = nueva_cantidad
-        self.ultima_actualizacion = datetime.utcnow()
-        db.session.commit()
-    
-    def calcular_exceso_stock(self):
-        """Calcular si hay exceso de stock basado en stock óptimo."""
-        if self.stock_optimo is None:
-            return 0
-        exceso = max(0, self.stock_actual - self.stock_optimo)
-        return exceso
-    
-    def verificar_stock_bajo(self):
-        """Verificar si el stock está por debajo del mínimo."""
-        return self.stock_actual < self.stock_minimo
-    
-    @classmethod
-    def productos_con_exceso_stock(cls):
-        """Obtener lista de productos con exceso de stock."""
-        inventarios = cls.query.filter(cls.stock_optimo != None).all()
-        return [inv for inv in inventarios if inv.calcular_exceso_stock() > 0]
-    
-    @classmethod
-    def productos_con_stock_bajo(cls):
-        """Obtener lista de productos con stock bajo."""
-        return cls.query.filter(cls.stock_actual < cls.stock_minimo).all()

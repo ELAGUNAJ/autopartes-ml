@@ -155,7 +155,7 @@
                                 <td>{{ item.codigo }}</td>
                                 <td>{{ item.categoria }}</td>
                                 <td>{{ item.excedente }}</td>
-                                <td>{{ 'S/ {:,.2f}'.format(item.excedente * item.precio_unitario) }}</td>
+                                <td>{{ 'S/ {:.2f}'.format(item['excedente'] * item['precio_unitario']) }}</td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -279,7 +279,7 @@
                 {% else %}
                 <div class="text-center py-3">
                     <p>No hay ventas registradas aún.</p>
-                    <a href="{{ url_for('ventas.registrar') }}" class="btn btn-primary">Registrar venta</a>
+                    <a href="{{ url_for('ventas.nueva_venta')}}" class="btn btn-primary">Registrar venta</a>
                 </div>
                 {% endif %}
             </div>

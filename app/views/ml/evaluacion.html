@@ -1,0 +1,61 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header bg-primary text-white">
+        <h5 class="card-title mb-0">Evaluación de Resultados</h5>
+    </div>
+    <div class="card-body">
+        <form method="post" action="{{ url_for('ml.evaluacion') }}">
+            {{ form.csrf_token }}
+            
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label for="fecha_inicio" class="form-label">Fecha Inicio</label>
+                    {{ form.fecha_inicio(class="form-control", id="fecha_inicio", type="date") }}
+                    {% if form.fecha_inicio.errors %}
+                        <div class="text-danger">
+                            {% for error in form.fecha_inicio.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="col-md-6">
+                    <label for="fecha_fin" class="form-label">Fecha Fin</label>
+                    {{ form.fecha_fin(class="form-control", id="fecha_fin", type="date") }}
+                    {% if form.fecha_fin.errors %}
+                        <div class="text-danger">
+                            {% for error in form.fecha_fin.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <label for="metrica" class="form-label">Métrica de Evaluación</label>
+                {{ form.metrica(class="form-select", id="metrica") }}
+                {% if form.metrica.errors %}
+                    <div class="text-danger">
+                        {% for error in form.metrica.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+                <small class="form-text text-muted">Seleccione la métrica principal para evaluar el rendimiento del modelo</small>
+            </div>
+            
+            <div class="d-grid">
+                {{ form.submit(class="btn btn-primary") }}
+            </div>
+        </form>
+        
+        <div class="alert alert-info mt-4">
+            <i class="fas fa-info-circle me-2"></i>
+            <strong>Nota:</strong> Para realizar una evaluación válida, el modelo debe haber sido entrenado y debe haber generado predicciones para el período seleccionado.
+        </div>
+    </div>
+</div>
+{% endblock %}

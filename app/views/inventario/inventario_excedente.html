@@ -1,0 +1,51 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header bg-danger text-white">
+        <h5 class="card-title mb-0">Productos con Inventario Excedente</h5>
+    </div>
+    <div class="card-body">
+        {% if inventario %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Código</th>
+                        <th>Categoría</th>
+                        <th>Modelo</th>
+                        <th>Stock Actual</th>
+                        <th>Stock Óptimo</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for producto, inventario_item in inventario %}
+                    <tr>
+                        <td>{{ producto.codigo }}</td>
+                        <td><span class="badge bg-secondary">{{ producto.categoria }}</span></td>
+                        <td>{{ producto.modelo_carro }}</td>
+                        <td class="fw-bold text-danger">{{ inventario_item.stock_actual }}</td>
+                        <td>{{ inventario_item.stock_optimo }}</td>
+                        <td>
+                            <a href="{{ url_for('inventario.editar_inventario', producto_id=producto.id) }}" class="btn btn-sm btn-primary">
+                                <i class="fas fa-edit"></i> Actualizar Stock
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="alert alert-info">
+            No hay productos con inventario excedente en este momento.
+        </div>
+        {% endif %}
+        
+        <a href="{{ url_for('inventario.index') }}" class="btn btn-secondary mt-3">
+            <i class="fas fa-arrow-left me-2"></i>Volver al Inventario
+        </a>
+    </div>
+</div>
+{% endblock %}

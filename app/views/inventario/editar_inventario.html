@@ -1,0 +1,72 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header bg-success text-white">
+        <h5 class="card-title mb-0">Actualizar Inventario</h5>
+    </div>
+    <div class="card-body">
+        <div class="alert alert-info">
+            <h5>{{ producto.codigo }} - {{ producto.modelo_carro }}</h5>
+            <p class="mb-0">Categoría: {{ producto.categoria }}</p>
+        </div>
+        
+        <form method="POST" action="{{ url_for('inventario.editar_inventario', producto_id=producto.id) }}">
+            {{ form.csrf_token }}
+            
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="stock_actual" class="form-label">{{ form.stock_actual.label }}</label>
+                        {{ form.stock_actual(class="form-control") }}
+                        {% if form.stock_actual.errors %}
+                        <div class="text-danger">
+                            {% for error in form.stock_actual.errors %}
+                            <small>{{ error }}</small>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="stock_minimo" class="form-label">{{ form.stock_minimo.label }}</label>
+                        {{ form.stock_minimo(class="form-control") }}
+                        {% if form.stock_minimo.errors %}
+                        <div class="text-danger">
+                            {% for error in form.stock_minimo.errors %}
+                            <small>{{ error }}</small>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="stock_optimo" class="form-label">{{ form.stock_optimo.label }}</label>
+                        {{ form.stock_optimo(class="form-control") }}
+                        {% if form.stock_optimo.errors %}
+                        <div class="text-danger">
+                            {% for error in form.stock_optimo.errors %}
+                            <small>{{ error }}</small>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-4 text-end">
+                <a href="{{ url_for('inventario.index') }}" class="btn btn-secondary me-2">
+                    <i class="fas fa-times me-2"></i>Cancelar
+                </a>
+                <button type="submit" class="btn btn-success">
+                    <i class="fas fa-save me-2"></i>Actualizar Inventario
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

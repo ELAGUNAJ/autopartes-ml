@@ -1,0 +1,32 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header bg-primary text-white">
+        <h5 class="card-title mb-0">Importar Inventario</h5>
+    </div>
+    <div class="card-body">
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle me-2"></i>
+            Puedes cargar un archivo CSV con productos e inventario para importarlos al sistema.
+        </div>
+
+        <form method="POST" enctype="multipart/form-data">
+            <div class="mb-3">
+                <label for="archivo_csv" class="form-label">Archivo CSV</label>
+                <input type="file" class="form-control" id="archivo_csv" name="archivo_csv" accept=".csv" required>
+                <div class="form-text">
+                    El archivo debe contener: codigo, categoria, modelo_carro, precio_unitario, stock_actual
+                </div>
+            </div>
+            
+            <div class="text-end">
+                <a href="{{ url_for('inventario.index') }}" class="btn btn-secondary me-2">Cancelar</a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-file-import me-2"></i>Importar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

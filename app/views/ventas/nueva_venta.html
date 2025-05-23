@@ -1,0 +1,137 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header bg-primary text-white">
+        <h5 class="card-title mb-0">Registrar Nueva Venta</h5>
+    </div>
+    <div class="card-body">
+        <form method="POST" action="{{ url_for('ventas.nueva_venta') }}">
+            {{ form.csrf_token }}
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="producto_id" class="form-label">{{ form.producto_id.label }}</label>
+                        {{ form.producto_id(class="form-select") }}
+                        {% if form.producto_id.errors %}
+                            <div class="text-danger">
+                                {% for error in form.producto_id.errors %}
+                                    <small>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label for="cantidad" class="form-label">{{ form.cantidad.label }}</label>
+                        {{ form.cantidad(class="form-control") }}
+                        {% if form.cantidad.errors %}
+                            <div class="text-danger">
+                                {% for error in form.cantidad.errors %}
+                                    <small>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label for="precio_unitario" class="form-label">{{ form.precio_unitario.label }}</label>
+                        {{ form.precio_unitario(class="form-control", step="0.01") }}
+                        {% if form.precio_unitario.errors %}
+                            <div class="text-danger">
+                                {% for error in form.precio_unitario.errors %}
+                                    <small>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="text-end mt-3">
+                <a href="{{ url_for('ventas.index') }}" class="btn btn-secondary me-2">
+                    <i class="fas fa-times me-2"></i>Cancelar
+                </a>
+                            
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save me-2"></i>Registrar Venta
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card mt-4">
+    <div class="card-header bg-light">
+        <h5 class="card-title mb-0">Información del Producto</h5>
+    </div>
+    <div class="card-body">
+        <div id="producto-info" class="d-none">
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>Código:</strong> <span id="producto-codigo"></span></p>
+                    <p><strong>Modelo:</strong> <span id="producto-modelo"></span></p>
+                    <p><strong>Categoría:</strong> <span id="producto-categoria"></span></p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Precio Unitario:</strong> S/ <span id="producto-precio"></span></p>
+                    <p><strong>Stock Disponible:</strong> <span id="producto-stock"></span></p>
+                </div>
+            </div>
+        </div>
+        <div id="producto-info-placeholder" class="text-center text-muted py-3">
+            <i class="fas fa-box fa-2x mb-2"></i>
+            <p>Selecciona un producto para ver su información</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const productoSelect = document.getElementById('producto_id');
+        const precioInput = document.getElementById('precio_unitario');
+        
+        productoSelect.addEventListener('change', function() {
+            const productoId = this.value;
+            
+            if (productoId) {
+                // Ocultar placeholder y mostrar info del producto
+                document.getElementById('producto-info-placeholder').classList.add('d-none');
+                document.getElementById('producto-info').classList.remove('d-none');
+                
+                // Hacer petición para obtener los datos del producto
+                fetch(`/ventas/api/productos/${productoId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        // Actualizar información del producto
+                        document.getElementById('producto-codigo').textContent = data.codigo || '';
+                        document.getElementById('producto-modelo').textContent = data.modelo || '';
+                        document.getElementById('producto-categoria').textContent = data.categoria || '';
+                        document.getElementById('producto-precio').textContent = data.precio.toFixed(2) || '0.00';
+                        document.getElementById('producto-stock').textContent = data.stock_actual || '0';
+                        
+                        // Actualizar el precio unitario en el formulario
+                        precioInput.value = data.precio.toFixed(2);
+                    })
+                    .catch(error => {
+                        console.error('Error al obtener datos del producto:', error);
+                    });
+            } else {
+                // Mostrar placeholder y ocultar info del producto
+                document.getElementById('producto-info-placeholder').classList.remove('d-none');
+                document.getElementById('producto-info').classList.add('d-none');
+                
+                // Limpiar precio unitario
+                precioInput.value = '';
+            }
+        });
+    });
+</script>
+{% endblock %}

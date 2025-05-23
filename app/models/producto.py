@@ -34,13 +34,3 @@ class Producto(db.Model):
             'es_producto_nuevo': self.es_producto_nuevo,
             'stock_actual': self.inventario.stock_actual if self.inventario else 0
         }
-    
-    @classmethod
-    def buscar_por_categoria(cls, categoria):
-        """Buscar productos por categoría."""
-        return cls.query.filter_by(categoria=categoria).all()
-    
-    @classmethod
-    def buscar_por_modelo(cls, modelo_carro):
-        """Buscar productos por modelo de carro."""
-        return cls.query.filter_by(modelo_carro=modelo_carro).all()

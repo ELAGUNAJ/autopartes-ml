@@ -2,18 +2,18 @@
 
 {% block content %}
 <div class="row">
-    <div class="col-md-8 mx-auto">
-        <div class="card dashboard-card">
+    <div class="col-md-6 offset-md-3">
+        <div class="card">
             <div class="card-header bg-primary text-white">
-                <h5 class="card-title mb-0"><i class="fas fa-sign-in-alt me-2"></i>Iniciar Sesión</h5>
+                <h5 class="card-title mb-0">Iniciar Sesión</h5>
             </div>
             <div class="card-body">
-                <form method="post" action="{{ url_for('auth.login') }}">
+                <form method="post">
                     {{ form.csrf_token }}
                     
                     <div class="mb-3">
                         <label for="username" class="form-label">Usuario</label>
-                        {{ form.username(class="form-control", id="username", placeholder="Ingrese su nombre de usuario") }}
+                        {{ form.username(class="form-control", id="username") }}
                         {% if form.username.errors %}
                             <div class="text-danger">
                                 {% for error in form.username.errors %}
@@ -25,7 +25,7 @@
                     
                     <div class="mb-3">
                         <label for="password" class="form-label">Contraseña</label>
-                        {{ form.password(class="form-control", id="password", placeholder="Ingrese su contraseña") }}
+                        {{ form.password(class="form-control", id="password") }}
                         {% if form.password.errors %}
                             <div class="text-danger">
                                 {% for error in form.password.errors %}
@@ -40,34 +40,8 @@
                         <label class="form-check-label" for="remember_me">Recordarme</label>
                     </div>
                     
-                    <div class="d-grid">
-                        {{ form.submit(class="btn btn-primary") }}
-                    </div>
+                    <button type="submit" class="btn btn-primary">Iniciar Sesión</button>
                 </form>
-            </div>
-        </div>
-        
-        <div class="card mt-4">
-            <div class="card-body">
-                <h5 class="card-title">Sobre el Sistema</h5>
-                <p class="card-text">Este sistema utiliza Machine Learning para optimizar la gestión de inventario y venta de autopartes en Lima. Mejora la eficiencia operativa, reduce el exceso de inventario y aumenta las ventas a través de predicciones precisas.</p>
-                <div class="row text-center">
-                    <div class="col-md-4">
-                        <i class="fas fa-chart-line fa-2x text-primary mb-2"></i>
-                        <h6>Predicciones</h6>
-                        <p class="small text-muted">Estimaciones precisas de demanda</p>
-                    </div>
-                    <div class="col-md-4">
-                        <i class="fas fa-boxes fa-2x text-success mb-2"></i>
-                        <h6>Inventario</h6>
-                        <p class="small text-muted">Gestión eficiente de stock</p>
-                    </div>
-                    <div class="col-md-4">
-                        <i class="fas fa-chart-bar fa-2x text-info mb-2"></i>
-                        <h6>Análisis</h6>
-                        <p class="small text-muted">Métricas y evaluación de impacto</p>
-                    </div>
-                </div>
             </div>
         </div>
     </div>
